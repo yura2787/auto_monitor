@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aiogram import Bot
 from aiogram.types import InputMediaPhoto, URLInputFile
 
@@ -6,43 +8,41 @@ from services.price_analyzer import PriceAnalysis
 from models.filter import Filter
 
 
-def _format_price(price: int) -> str:
-    return f"${price:,}".replace(",", " ")  # non-breaking thin space
+def _fmt_price(price: int) -> str:
+    return f"${price:,}".replace(",", " ")
 
 
 def _build_text(
     listing: OLXListing,
     fltr: Filter,
-    analysis: Optional["PriceAnalysis"] = None,
+    analysis: Optional[PriceAnalysis] = None,
 ) -> str:
-    from typing import Optional  # local import щоб уникнути циклу
-
     lines: list[str] = [f"🚗 <b>{listing.title}</b>\n"]
 
-    price_str = _format_price(listing.price) if listing.price else "Ціна не вказана"
-    lines.append(f"💰 <b>Ціна:</b> {price_str}")
+    price_str = _fmt_price(listing.price) if listing.price else "Price not specified"
+    lines.append(f"💰 <b>Price:</b> {price_str}")
 
     if analysis:
         lines.append(f"{analysis.emoji} {analysis.verdict}")
         lines.append(
-            f"📊 Середня по ринку: {_format_price(analysis.median_price)} "
-            f"(на основі {analysis.sample_size} оголошень)"
+            f"📊 Market median: {_fmt_price(analysis.median_price)} "
+            f"(based on {analysis.sample_size} listings)"
         )
 
     lines.append("")
 
     if listing.year:
-        lines.append(f"📅 <b>Рік:</b> {listing.year}")
+        lines.append(f"📅 <b>Year:</b> {listing.year}")
     if listing.mileage:
-        lines.append(f"🛣 <b>Пробіг:</b> {listing.mileage:,} км".replace(",", " "))
+        lines.append(f"🛣 <b>Mileage:</b> {listing.mileage:,} km".replace(",", " "))
     if listing.engine:
-        lines.append(f"⚙️ <b>Двигун:</b> {listing.engine}")
+        lines.append(f"⚙️ <b>Engine:</b> {listing.engine}")
     if listing.city:
         lines.append(f"📍 {listing.city}")
     if listing.published_at:
-        lines.append(f"🕐 <b>Опубліковано:</b> {listing.published_at}")
+        lines.append(f"🕐 <b>Posted:</b> {listing.published_at}")
 
-    lines.append(f"\n🔗 <a href='{listing.url}'>Переглянути на OLX</a>")
+    lines.append(f"\n🔗 <a href='{listing.url}'>View on OLX</a>")
     return "\n".join(lines)
 
 
@@ -55,7 +55,7 @@ class Notifier:
         chat_id: int,
         listing: OLXListing,
         fltr: Filter,
-        analysis: "PriceAnalysis | None" = None,
+        analysis: Optional[PriceAnalysis] = None,
     ) -> None:
         text = _build_text(listing, fltr, analysis)
         photos = listing.photos or []
@@ -89,20 +89,20 @@ class Notifier:
         if not stats:
             await self._bot.send_message(
                 chat_id=chat_id,
-                text="📊 Сьогодні нових оголошень не знайдено.",
+                text="📊 No new listings found today.",
             )
             return
 
-        lines = ["📊 <b>Ваша статистика за сьогодні</b>\n"]
+        lines = ["📊 <b>Your stats for today</b>\n"]
         for s in stats:
             lines.append(f"🔍 <b>{s['filter_name']}</b>:")
-            lines.append(f"— Знайдено нових: {s['count']}")
+            lines.append(f"— New listings: {s['count']}")
             if s.get("min_price"):
-                lines.append(f"— Мінімальна ціна: {_format_price(s['min_price'])}")
+                lines.append(f"— Min price: {_fmt_price(s['min_price'])}")
             if s.get("avg_price"):
-                lines.append(f"— Середня ціна: {_format_price(s['avg_price'])}")
+                lines.append(f"— Avg price: {_fmt_price(s['avg_price'])}")
             if s.get("best_url"):
-                lines.append(f"— Найкраща пропозиція: <a href='{s['best_url']}'>посилання</a>")
+                lines.append(f"— Best deal: <a href='{s['best_url']}'>link</a>")
             lines.append("")
 
         await self._bot.send_message(
