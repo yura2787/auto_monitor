@@ -19,7 +19,7 @@ def filters_list_kb(filters: list) -> InlineKeyboardMarkup:
             text=f"{status} {fltr.display_name()}",
             callback_data=f"filter:{fltr.id}",
         )
-    builder.button(text="🏠 Main menu", callback_data="main_menu")
+    builder.button(text="◀️ Back to menu", callback_data="main_menu")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -31,7 +31,7 @@ def filter_actions_kb(filter_id: int, is_active: bool) -> InlineKeyboardMarkup:
     else:
         builder.button(text="▶️ Resume", callback_data=f"resume:{filter_id}")
     builder.button(text="🗑 Delete", callback_data=f"delete:{filter_id}")
-    builder.button(text="◀️ Back", callback_data="my_filters")
+    builder.button(text="◀️ Back to filters", callback_data="my_filters")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -51,13 +51,22 @@ def condition_kb() -> InlineKeyboardMarkup:
     builder.button(text="New", callback_data="condition:new")
     builder.button(text="Used", callback_data="condition:used")
     builder.button(text="Damaged", callback_data="condition:damaged")
-    builder.adjust(2)
+    builder.button(text="◀️ Cancel", callback_data="cancel_filter")
+    builder.adjust(2, 2, 1)
     return builder.as_markup()
 
 
 def skip_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="Skip ⏭", callback_data="skip")
+    builder.button(text="◀️ Cancel", callback_data="cancel_filter")
+    builder.adjust(2)
+    return builder.as_markup()
+
+
+def cancel_kb() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="◀️ Cancel", callback_data="cancel_filter")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -65,6 +74,13 @@ def skip_kb() -> InlineKeyboardMarkup:
 def confirm_delete_kb(filter_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="✅ Yes, delete", callback_data=f"confirm_delete:{filter_id}")
-    builder.button(text="❌ Cancel", callback_data=f"filter:{filter_id}")
+    builder.button(text="◀️ No, go back", callback_data=f"filter:{filter_id}")
     builder.adjust(2)
+    return builder.as_markup()
+
+
+def stats_kb() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="◀️ Back to menu", callback_data="main_menu")
+    builder.adjust(1)
     return builder.as_markup()
