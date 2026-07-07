@@ -1,12 +1,16 @@
 import asyncio
+import logging
 import re
 from dataclasses import dataclass, field
 from difflib import get_close_matches
 from typing import Optional
 
 import httpx
+from bs4 import BeautifulSoup
 
 from config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 BRAND_ALIASES: dict[str, str] = {
@@ -227,6 +231,13 @@ class OLXParser:
 
                 await asyncio.sleep(0.5)
 
+        # Fallback to Playwright if API returned nothing
+        if not all_listings:
+            logger.warning("API returned 0 listings for %s %s — trying Playwright fallback", brand_slug, model_slug)
+            all_listings = await self._parse_with_playwright(
+                brand_slug, model_slug, year_from, year_to, price_from, price_to, condition
+            )
+
         return all_listings
 
     def _parse_offer(self, offer: dict) -> Optional[OLXListing]:
@@ -288,6 +299,114 @@ class OLXParser:
             )
         except Exception:
             return None
+
+    async def _parse_with_playwright(
+        self,
+        brand_slug: str,
+        model_slug: Optional[str],
+        year_from: Optional[int],
+        year_to: Optional[int],
+        price_from: Optional[int],
+        price_to: Optional[int],
+        condition: Optional[str],
+    ) -> list[OLXListing]:
+        """Fallback parser using Playwright headless browser."""
+        try:
+            from playwright.async_api import async_playwright
+        except ImportError:
+            logger.error("Playwright not installed")
+            return []
+
+        # Build OLX search URL
+        if model_slug:
+            base = f"https://www.olx.ua/uk/transport/legkovye-avtomobili/{brand_slug}/{model_slug}/"
+        else:
+            base = f"https://www.olx.ua/uk/transport/legkovye-avtomobili/{brand_slug}/"
+
+        qs_parts = []
+        if price_from:
+            qs_parts.append(f"search[filter_float_price:from]={price_from}")
+        if price_to:
+            qs_parts.append(f"search[filter_float_price:to]={price_to}")
+        if year_from:
+            qs_parts.append(f"search[filter_float_year:from]={year_from}")
+        if year_to:
+            qs_parts.append(f"search[filter_float_year:to]={year_to}")
+        if condition == "used":
+            qs_parts.append("search[filter_enum_state][0]=used")
+        elif condition == "new":
+            qs_parts.append("search[filter_enum_state][0]=new")
+        elif condition == "damaged":
+            qs_parts.append("search[filter_enum_state][0]=damaged")
+
+        url = base + ("?" + "&".join(qs_parts) if qs_parts else "")
+        listings: list[OLXListing] = []
+
+        try:
+            async with async_playwright() as pw:
+                browser = await pw.chromium.launch(headless=True, args=["--no-sandbox"])
+                page = await browser.new_page(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                )
+                await page.goto(url, wait_until="networkidle", timeout=30000)
+                html = await page.content()
+                await browser.close()
+
+            soup = BeautifulSoup(html, "lxml")
+            cards = soup.select("[data-cy='l-card']")
+
+            for card in cards:
+                try:
+                    a_tag = card.select_one("a[href*='/d/']")
+                    if not a_tag:
+                        continue
+                    href = a_tag.get("href", "")
+                    card_url = href if href.startswith("http") else f"https://www.olx.ua{href}"
+
+                    # extract olx_id from URL
+                    m = re.search(r"-(ID\w+)\.html", card_url)
+                    if not m:
+                        continue
+                    olx_id = m.group(1)
+
+                    title_el = card.select_one("h4, h6, [data-testid='ad-title']")
+                    title = title_el.get_text(strip=True) if title_el else "No title"
+
+                    price_el = card.select_one("[data-testid='ad-price'], .price")
+                    price_text = price_el.get_text(strip=True) if price_el else ""
+                    price = None
+                    price_m = re.search(r"[\d\s]+", price_text.replace(" ", ""))
+                    if price_m:
+                        digits = re.sub(r"\s", "", price_m.group())
+                        if digits.isdigit():
+                            raw_price = int(digits)
+                            price = raw_price if raw_price < 500_000 else raw_price // 42
+
+                    location_el = card.select_one("[data-testid='location-date'], .location")
+                    city = None
+                    if location_el:
+                        city = location_el.get_text(strip=True).split("-")[0].strip()
+
+                    listings.append(OLXListing(
+                        olx_id=olx_id,
+                        title=title,
+                        price=price,
+                        year=None,
+                        mileage=None,
+                        city=city,
+                        engine=None,
+                        url=card_url,
+                        photos=[],
+                        published_at=None,
+                    ))
+                except Exception:
+                    continue
+
+            logger.info("Playwright fallback: found %d listings", len(listings))
+        except Exception:
+            logger.exception("Playwright fallback failed")
+
+        return listings
 
     async def close(self) -> None:
         pass

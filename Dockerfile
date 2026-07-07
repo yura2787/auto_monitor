@@ -10,5 +10,6 @@ RUN pip install uv
 
 COPY pyproject.toml .
 RUN uv pip install --system --python 3.12 -r pyproject.toml
+RUN playwright install chromium --with-deps
 
 COPY . .
