@@ -234,11 +234,18 @@ async def cb_confirm(call: CallbackQuery, state: FSMContext, session: AsyncSessi
     )
     session.add(fltr)
     await session.commit()
+    await session.refresh(fltr)
 
+    # seed existing listings silently so first monitor run won't flood notifications
+    from tasks.monitor import seed_filter
+    seed_filter.delay(fltr.id)
+
+    from bot.keyboards import main_menu_kb
     await call.message.edit_text(
         f"✅ Filter <b>{fltr.display_name()}</b> saved!\n\n"
         "I will notify you as soon as I find new listings. 🔍",
         parse_mode="HTML",
+        reply_markup=main_menu_kb(),
     )
     await call.answer()
 
