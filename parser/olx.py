@@ -317,13 +317,11 @@ class OLXParser:
             logger.error("Playwright not installed")
             return []
 
-        # Build OLX search URL
+        # Build OLX search URL — use query params for reliability (brand page may not exist)
+        base = "https://www.olx.ua/uk/transport/legkovye-avtomobili/"
+        qs_parts = [f"search[filter_enum_brand][0]={brand_slug}"]
         if model_slug:
-            base = f"https://www.olx.ua/uk/transport/legkovye-avtomobili/{brand_slug}/{model_slug}/"
-        else:
-            base = f"https://www.olx.ua/uk/transport/legkovye-avtomobili/{brand_slug}/"
-
-        qs_parts = []
+            qs_parts.append(f"search[filter_enum_model][0]={model_slug}")
         if price_from:
             qs_parts.append(f"search[filter_float_price:from]={price_from}")
         if price_to:
@@ -339,7 +337,7 @@ class OLXParser:
         elif condition == "damaged":
             qs_parts.append("search[filter_enum_state][0]=damaged")
 
-        url = base + ("?" + "&".join(qs_parts) if qs_parts else "")
+        url = base + "?" + "&".join(qs_parts)
         listings: list[OLXListing] = []
 
         try:
