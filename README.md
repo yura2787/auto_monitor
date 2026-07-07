@@ -7,9 +7,7 @@
 
 
 
-
-
-<img width="792" height="522" alt="2026-07-07_16-59" src="https://github.com/user-attachments/assets/a4d50e32-ec43-4cd2-892e-91e44233657d" />
+<img width="822" height="578" alt="2026-07-07_17-08" src="https://github.com/user-attachments/assets/847cc86b-ae4b-4f0b-820f-f1760d4f2207" />
 
 
 
