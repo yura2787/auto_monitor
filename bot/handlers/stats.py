@@ -4,7 +4,8 @@ from aiogram.types import Message, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from bot.keyboards import main_menu_kb
+from bot.keyboards import main_menu_kb, stats_kb
+from bot.utils import safe_edit
 from models.filter import Filter
 from models.listing import Listing
 from models.user import User
@@ -56,7 +57,7 @@ async def show_stats(event: Message | CallbackQuery, session: AsyncSession) -> N
         text = "\n".join(lines)
 
     if isinstance(event, CallbackQuery):
-        await event.message.edit_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
+        await safe_edit(event.message, text, reply_markup=stats_kb())
         await event.answer()
     else:
-        await event.answer(text, parse_mode="HTML", reply_markup=main_menu_kb())
+        await event.answer(text, parse_mode="HTML", reply_markup=stats_kb())

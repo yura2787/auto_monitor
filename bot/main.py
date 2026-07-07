@@ -8,7 +8,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import TelegramObject
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.handlers import start_router, filters_router, my_filters_router, stats_router
+from bot.handlers import start_router, filters_router, my_filters_router, stats_router, test_router
 from bot.middlewares import ThrottlingMiddleware
 from config.settings import settings
 from models.base import engine, Base, AsyncSessionLocal
@@ -48,6 +48,7 @@ async def main() -> None:
     dp.include_router(filters_router)
     dp.include_router(my_filters_router)
     dp.include_router(stats_router)
+    dp.include_router(test_router)
 
     await on_startup(bot)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from bot.keyboards import filters_list_kb, filter_actions_kb, confirm_delete_kb, main_menu_kb
+from bot.utils import safe_edit
 from models.filter import Filter
 from models.user import User
 
@@ -34,7 +35,7 @@ async def show_filters(event: Message | CallbackQuery, session: AsyncSession) ->
         kb = main_menu_kb()
 
     if isinstance(event, CallbackQuery):
-        await event.message.edit_text(text, reply_markup=kb, parse_mode="HTML")
+        await safe_edit(event.message, text, reply_markup=kb)
         await event.answer()
     else:
         await event.answer(text, reply_markup=kb, parse_mode="HTML")
@@ -59,11 +60,7 @@ async def show_filter_detail(call: CallbackQuery, session: AsyncSession) -> None
         f"🛣 Mileage: {fltr.mileage_from or 0} – {fltr.mileage_to or '∞'} k km\n"
         f"🏷 Condition: {fltr.condition or 'any'}"
     )
-    await call.message.edit_text(
-        text,
-        reply_markup=filter_actions_kb(fltr.id, fltr.is_active),
-        parse_mode="HTML",
-    )
+    await safe_edit(call.message, text, reply_markup=filter_actions_kb(fltr.id, fltr.is_active))
     await call.answer()
 
 
@@ -99,11 +96,10 @@ async def ask_delete(call: CallbackQuery, session: AsyncSession) -> None:
     if not fltr:
         await call.answer("Filter not found", show_alert=True)
         return
-    await call.message.edit_text(
-        f"🗑 Delete filter <b>{fltr.display_name()}</b>?\n\n"
-        "All found listings will also be removed.",
+    await safe_edit(
+        call.message,
+        f"🗑 Delete filter <b>{fltr.display_name()}</b>?\n\nAll found listings will also be removed.",
         reply_markup=confirm_delete_kb(filter_id),
-        parse_mode="HTML",
     )
     await call.answer()
 
@@ -116,5 +112,5 @@ async def confirm_delete(call: CallbackQuery, session: AsyncSession) -> None:
     if fltr:
         await session.delete(fltr)
         await session.commit()
-    await call.message.edit_text("✅ Filter deleted.", reply_markup=main_menu_kb())
+    await safe_edit(call.message, "✅ Filter deleted.", reply_markup=main_menu_kb())
     await call.answer()

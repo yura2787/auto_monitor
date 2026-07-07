@@ -1,11 +1,10 @@
-FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
+FROM python:3.13-slim
 
 WORKDIR /app
 
-COPY pyproject.toml .
-RUN pip install uv && uv pip install --system -r pyproject.toml
+RUN pip install uv
 
-# install Playwright browsers
-RUN playwright install chromium
+COPY pyproject.toml .
+RUN uv pip install --system -r pyproject.toml
 
 COPY . .

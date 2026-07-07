@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from bot.keyboards import main_menu_kb
+from bot.utils import safe_edit
 from models.user import User
 
 router = Router()
@@ -41,5 +42,5 @@ async def cmd_start(message: Message, session: AsyncSession) -> None:
 
 @router.callback_query(lambda c: c.data == "main_menu")
 async def cb_main_menu(call: CallbackQuery) -> None:
-    await call.message.edit_text("Choose an action:", reply_markup=main_menu_kb())
+    await safe_edit(call.message, "Choose an action:", reply_markup=main_menu_kb())
     await call.answer()

@@ -5,7 +5,9 @@ from .inline import (
     confirm_filter_kb,
     condition_kb,
     skip_kb,
+    cancel_kb,
     confirm_delete_kb,
+    stats_kb,
 )
 
 __all__ = [
@@ -15,5 +17,7 @@ __all__ = [
     "confirm_filter_kb",
     "condition_kb",
     "skip_kb",
+    "cancel_kb",
     "confirm_delete_kb",
+    "stats_kb",
 ]
