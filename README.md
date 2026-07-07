@@ -21,6 +21,9 @@
 <img width="682" height="784" alt="2026-07-07_16-54_1" src="https://github.com/user-attachments/assets/4783352b-3f91-4f8b-8cd0-a5961a2bcd85" />
 
 
+<img width="1256" height="1432" alt="2026-07-07_16-54_2" src="https://github.com/user-attachments/assets/e47388b1-f587-41e3-9d1c-eeb3045c785b" />
+
+
 
 
 Telegram bot for monitoring car listings on OLX.ua. Sends instant notifications when new cars matching your filters appear.
