@@ -1,3 +1,4 @@
+![Uploading 2026-07-07_16-54.png…]()
 # Auto Monitor Bot
 
 
