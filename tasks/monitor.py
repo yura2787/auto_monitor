@@ -182,6 +182,54 @@ async def _run_cleanup() -> None:
         logger.info("Cleanup: removed %d old listings", result.rowcount)
 
 
+async def _run_seed_filter(filter_id: int) -> None:
+    """Parse OLX for a newly created filter and mark all current listings as seen.
+
+    This prevents a flood of notifications on first monitor run.
+    """
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Filter).where(Filter.id == filter_id))
+        fltr = result.scalar_one_or_none()
+        if not fltr:
+            return
+
+    parser = OLXParser()
+    checker = DuplicateChecker()
+    try:
+        listings = await parser.parse(
+            brand=fltr.brand,
+            model=fltr.model,
+            year_from=fltr.year_from,
+            year_to=fltr.year_to,
+            price_from=fltr.price_from,
+            price_to=fltr.price_to,
+            mileage_from=fltr.mileage_from,
+            mileage_to=fltr.mileage_to,
+            condition=fltr.condition,
+            enrich=False,  # no need for details, just collect IDs
+        )
+        async with AsyncSessionLocal() as session:
+            for raw in listings:
+                if not await checker.is_duplicate(session, raw.olx_id, fltr.id):
+                    db_listing = Listing(
+                        olx_id=raw.olx_id,
+                        filter_id=fltr.id,
+                        title=raw.title,
+                        price=raw.price,
+                        year=None,
+                        mileage=None,
+                        city=raw.city,
+                        engine=None,
+                        url=raw.url,
+                        photos=[],
+                        published_at=raw.published_at,
+                    )
+                    await checker.save(session, db_listing)
+        logger.info("Seeded filter %d with %d listings", filter_id, len(listings))
+    finally:
+        await parser.close()
+
+
 # ── Celery tasks ──────────────────────────────────────────────────────────────
 
 @celery_app.task(name="tasks.monitor.monitor_filters", bind=True, max_retries=3)
@@ -201,3 +249,8 @@ def daily_stats() -> None:
 @celery_app.task(name="tasks.monitor.cleanup_old_listings")
 def cleanup_old_listings() -> None:
     asyncio.run(_run_cleanup())
+
+
+@celery_app.task(name="tasks.monitor.seed_filter")
+def seed_filter(filter_id: int) -> None:
+    asyncio.run(_run_seed_filter(filter_id))
