@@ -1,15 +1,24 @@
-![Uploading 2026-07-07_16-54.png…]()
 # Auto Monitor Bot
 
-
-<img width="932" height="598" alt="2026-07-07_16-53" src="https://github.com/user-attachments/assets/d297c871-8088-4aba-8087-bafc34b17d65" />
-
+<img width="932" height="598" alt="2026-07-07_16-53" src="https://github.com/user-attachments/assets/2e94b995-9ced-45f7-95ca-e0c306e0784f" />
 
 
-<img width="842" height="332" alt="2026-07-07_16-53_1" src="https://github.com/user-attachments/assets/482f1f62-53c5-4989-bfd0-4ae72c5dc946" />
+<img width="842" height="332" alt="2026-07-07_16-53_1" src="https://github.com/user-attachments/assets/9d4a13cf-6f31-4bcd-86c2-11fce5ee53ee" />
 
 
 
+
+
+<img width="792" height="522" alt="2026-07-07_16-59" src="https://github.com/user-attachments/assets/a4d50e32-ec43-4cd2-892e-91e44233657d" />
+
+
+
+
+<img width="700" height="814" alt="2026-07-07_16-54" src="https://github.com/user-attachments/assets/0da9f2c0-8825-4a56-a95a-4ec20b5c6c22" />
+
+
+
+<img width="682" height="784" alt="2026-07-07_16-54_1" src="https://github.com/user-attachments/assets/4783352b-3f91-4f8b-8cd0-a5961a2bcd85" />
 
 
 
