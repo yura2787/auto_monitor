@@ -5,8 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from bot.states import AddFilterFSM
-from bot.keyboards import confirm_filter_kb, condition_kb, skip_kb, cancel_kb
-from bot.utils import safe_edit
+from bot.keyboards import confirm_filter_kb, condition_kb, skip_kb
 from models.filter import Filter
 from models.user import User
 
@@ -35,7 +34,9 @@ def _filter_summary(data: dict) -> str:
 async def start_wizard(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await state.set_state(AddFilterFSM.brand)
-    await safe_edit(call.message, "🚗 Enter the car brand:\nExample: Toyota, BMW, Mercedes\n\nOr тойота, бмв, мерседес", reply_markup=cancel_kb())
+    await call.message.edit_text(
+        "🚗 Enter the car brand:\nExample: Toyota, BMW, Mercedes"
+    )
     await call.answer()
 
 
@@ -57,7 +58,10 @@ async def step_brand(message: Message, state: FSMContext) -> None:
 async def step_model(message: Message, state: FSMContext) -> None:
     await state.update_data(model=message.text.strip())
     await state.set_state(AddFilterFSM.year_from)
-    await message.answer("📅 Year from:\nExample: 2015\n\nOr skip:", reply_markup=skip_kb())
+    await message.answer(
+        "📅 Year from:\nExample: 2015\n\nOr skip:",
+        reply_markup=skip_kb(),
+    )
 
 
 # ── year from ─────────────────────────────────────────────────────────────────
@@ -70,7 +74,10 @@ async def step_year_from(message: Message, state: FSMContext) -> None:
         return
     await state.update_data(year_from=int(val))
     await state.set_state(AddFilterFSM.year_to)
-    await message.answer("📅 Year to:\nExample: 2022\n\nOr skip:", reply_markup=skip_kb())
+    await message.answer(
+        "📅 Year to:\nExample: 2022\n\nOr skip:",
+        reply_markup=skip_kb(),
+    )
 
 
 # ── year to ───────────────────────────────────────────────────────────────────
@@ -83,7 +90,10 @@ async def step_year_to(message: Message, state: FSMContext) -> None:
         return
     await state.update_data(year_to=int(val))
     await state.set_state(AddFilterFSM.price_from)
-    await message.answer("💵 Price from (USD):\nExample: 5000\n\nOr skip:", reply_markup=skip_kb())
+    await message.answer(
+        "💵 Price from (USD):\nExample: 5000\n\nOr skip:",
+        reply_markup=skip_kb(),
+    )
 
 
 # ── price from ────────────────────────────────────────────────────────────────
@@ -96,7 +106,10 @@ async def step_price_from(message: Message, state: FSMContext) -> None:
         return
     await state.update_data(price_from=int(val))
     await state.set_state(AddFilterFSM.price_to)
-    await message.answer("💵 Price to (USD):\nExample: 20000\n\nOr skip:", reply_markup=skip_kb())
+    await message.answer(
+        "💵 Price to (USD):\nExample: 20000\n\nOr skip:",
+        reply_markup=skip_kb(),
+    )
 
 
 # ── price to ──────────────────────────────────────────────────────────────────
@@ -109,7 +122,10 @@ async def step_price_to(message: Message, state: FSMContext) -> None:
         return
     await state.update_data(price_to=int(val))
     await state.set_state(AddFilterFSM.mileage_from)
-    await message.answer("🛣 Mileage from (k km):\nExample: 0\n\nOr skip:", reply_markup=skip_kb())
+    await message.answer(
+        "🛣 Mileage from (k km):\nExample: 0\n\nOr skip:",
+        reply_markup=skip_kb(),
+    )
 
 
 # ── mileage from ──────────────────────────────────────────────────────────────
@@ -122,7 +138,10 @@ async def step_mileage_from(message: Message, state: FSMContext) -> None:
         return
     await state.update_data(mileage_from=int(val))
     await state.set_state(AddFilterFSM.mileage_to)
-    await message.answer("🛣 Mileage to (k km):\nExample: 150\n\nOr skip:", reply_markup=skip_kb())
+    await message.answer(
+        "🛣 Mileage to (k km):\nExample: 150\n\nOr skip:",
+        reply_markup=skip_kb(),
+    )
 
 
 # ── mileage to ────────────────────────────────────────────────────────────────
@@ -147,10 +166,10 @@ async def step_condition(call: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(AddFilterFSM.confirm)
 
     data = await state.get_data()
-    await safe_edit(
-        call.message,
+    await call.message.edit_text(
         f"📋 <b>Review your filter:</b>\n\n{_filter_summary(data)}",
         reply_markup=confirm_filter_kb(),
+        parse_mode="HTML",
     )
     await call.answer()
 
@@ -163,13 +182,13 @@ async def cb_skip(call: CallbackQuery, state: FSMContext) -> None:
 
     # maps current state → (next state, prompt text, has skip button)
     state_map = {
-        AddFilterFSM.model.state:        (AddFilterFSM.year_from,    "📅 Year from:\nOr skip:",           True),
-        AddFilterFSM.year_from.state:    (AddFilterFSM.year_to,      "📅 Year to:\nOr skip:",             True),
-        AddFilterFSM.year_to.state:      (AddFilterFSM.price_from,   "💵 Price from (USD):\nOr skip:",    True),
-        AddFilterFSM.price_from.state:   (AddFilterFSM.price_to,     "💵 Price to (USD):\nOr skip:",      True),
-        AddFilterFSM.price_to.state:     (AddFilterFSM.mileage_from, "🛣 Mileage from (k km):\nOr skip:", True),
-        AddFilterFSM.mileage_from.state: (AddFilterFSM.mileage_to,   "🛣 Mileage to (k km):\nOr skip:",  True),
-        AddFilterFSM.mileage_to.state:   (AddFilterFSM.condition,    "🏷 Car condition:",                 False),
+        AddFilterFSM.model.state:        (AddFilterFSM.year_from,    "📅 Year from:\nOr skip:",            True),
+        AddFilterFSM.year_from.state:    (AddFilterFSM.year_to,      "📅 Year to:\nOr skip:",              True),
+        AddFilterFSM.year_to.state:      (AddFilterFSM.price_from,   "💵 Price from (USD):\nOr skip:",     True),
+        AddFilterFSM.price_from.state:   (AddFilterFSM.price_to,     "💵 Price to (USD):\nOr skip:",       True),
+        AddFilterFSM.price_to.state:     (AddFilterFSM.mileage_from, "🛣 Mileage from (k km):\nOr skip:",  True),
+        AddFilterFSM.mileage_from.state: (AddFilterFSM.mileage_to,   "🛣 Mileage to (k km):\nOr skip:",   True),
+        AddFilterFSM.mileage_to.state:   (AddFilterFSM.condition,    "🏷 Car condition:",                  False),
     }
 
     if current not in state_map:
@@ -180,9 +199,9 @@ async def cb_skip(call: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(next_state)
 
     if next_state == AddFilterFSM.condition:
-        await safe_edit(call.message, text, reply_markup=condition_kb())
+        await call.message.edit_text(text, reply_markup=condition_kb())
     else:
-        await safe_edit(call.message, text, reply_markup=skip_kb() if has_skip else None)
+        await call.message.edit_text(text, reply_markup=skip_kb() if has_skip else None)
     await call.answer()
 
 
@@ -216,12 +235,10 @@ async def cb_confirm(call: CallbackQuery, state: FSMContext, session: AsyncSessi
     session.add(fltr)
     await session.commit()
 
-    from bot.keyboards import main_menu_kb
-    await safe_edit(
-        call.message,
+    await call.message.edit_text(
         f"✅ Filter <b>{fltr.display_name()}</b> saved!\n\n"
         "I will notify you as soon as I find new listings. 🔍",
-        reply_markup=main_menu_kb(),
+        parse_mode="HTML",
     )
     await call.answer()
 
@@ -232,5 +249,5 @@ async def cb_confirm(call: CallbackQuery, state: FSMContext, session: AsyncSessi
 async def cb_cancel(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     from bot.keyboards import main_menu_kb
-    await safe_edit(call.message, "Cancelled. Back to menu.", reply_markup=main_menu_kb())
+    await call.message.edit_text("Cancelled. Back to menu.", reply_markup=main_menu_kb())
     await call.answer()
