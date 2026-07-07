@@ -3,7 +3,8 @@
 <img width="932" height="598" alt="2026-07-07_16-53" src="https://github.com/user-attachments/assets/2e94b995-9ced-45f7-95ca-e0c306e0784f" />
 
 
-<img width="842" height="332" alt="2026-07-07_16-53_1" src="https://github.com/user-attachments/assets/9d4a13cf-6f31-4bcd-86c2-11fce5ee53ee" />
+
+<img width="952" height="432" alt="2026-07-07_17-08_1" src="https://github.com/user-attachments/assets/fbefdcb3-37fb-4a07-8c2c-cf6906966689" />
 
 
 
