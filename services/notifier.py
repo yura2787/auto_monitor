@@ -1,6 +1,8 @@
+import asyncio
 from typing import Optional
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramRetryAfter
 from aiogram.types import InputMediaPhoto, URLInputFile
 
 from parser.olx import OLXListing
@@ -34,7 +36,7 @@ def _build_text(
     if listing.year:
         lines.append(f"📅 <b>Year:</b> {listing.year}")
     if listing.mileage:
-        lines.append(f"🛣 <b>Mileage:</b> {listing.mileage:,} km".replace(",", " "))
+        lines.append(f"🛣 <b>Mileage:</b> {listing.mileage * 1000:,} km".replace(",", " "))
     if listing.engine:
         lines.append(f"⚙️ <b>Engine:</b> {listing.engine}")
     if listing.city:
@@ -60,30 +62,38 @@ class Notifier:
         text = _build_text(listing, fltr, analysis)
         photos = listing.photos or []
 
-        if len(photos) >= 2:
-            media = [
-                InputMediaPhoto(
-                    media=URLInputFile(photos[0]),
-                    caption=text,
-                    parse_mode="HTML",
-                ),
-                *[InputMediaPhoto(media=URLInputFile(p)) for p in photos[1:4]],
-            ]
-            await self._bot.send_media_group(chat_id=chat_id, media=media)
-        elif len(photos) == 1:
-            await self._bot.send_photo(
-                chat_id=chat_id,
-                photo=URLInputFile(photos[0]),
-                caption=text,
-                parse_mode="HTML",
-            )
-        else:
-            await self._bot.send_message(
-                chat_id=chat_id,
-                text=text,
-                parse_mode="HTML",
-                disable_web_page_preview=False,
-            )
+        for attempt in range(3):
+            try:
+                if len(photos) >= 2:
+                    media = [
+                        InputMediaPhoto(
+                            media=URLInputFile(photos[0]),
+                            caption=text,
+                            parse_mode="HTML",
+                        ),
+                        *[InputMediaPhoto(media=URLInputFile(p)) for p in photos[1:4]],
+                    ]
+                    await self._bot.send_media_group(chat_id=chat_id, media=media)
+                elif len(photos) == 1:
+                    await self._bot.send_photo(
+                        chat_id=chat_id,
+                        photo=URLInputFile(photos[0]),
+                        caption=text,
+                        parse_mode="HTML",
+                    )
+                else:
+                    await self._bot.send_message(
+                        chat_id=chat_id,
+                        text=text,
+                        parse_mode="HTML",
+                        disable_web_page_preview=False,
+                    )
+                await asyncio.sleep(0.5)  # throttle to avoid flood limits
+                break
+            except TelegramRetryAfter as e:
+                await asyncio.sleep(e.retry_after + 1)
+            except Exception:
+                break
 
     async def send_daily_stats(self, chat_id: int, stats: list[dict]) -> None:
         if not stats:

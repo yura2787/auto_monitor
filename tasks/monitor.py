@@ -47,11 +47,25 @@ async def _process_filter(
         mileage_from=fltr.mileage_from,
         mileage_to=fltr.mileage_to,
         condition=fltr.condition,
-        enrich=True,
+        enrich=False,
     )
+
+    if not listings:
+        return 0
+
+    # fetch market median once per filter (not once per listing)
+    market_median = await analyzer.get_market_median(fltr.brand, fltr.model)
 
     sent = 0
     async with AsyncSessionLocal() as session:
+        # fetch owner telegram_id once
+        user_result = await session.execute(
+            select(User.telegram_id)
+            .join(Filter, Filter.user_id == User.id)
+            .where(Filter.id == fltr.id)
+        )
+        telegram_id = user_result.scalar_one_or_none()
+
         for raw in listings:
             if await checker.is_duplicate(session, raw.olx_id, fltr.id):
                 continue
@@ -72,23 +86,15 @@ async def _process_filter(
             )
             await checker.save(session, db_listing)
 
-            # record price history entry
             if raw.price:
                 session.add(PriceHistory(listing_id=db_listing.id, price=raw.price))
                 await session.commit()
 
-            # price analysis against market
+            # compare price against pre-fetched market median
             analysis = None
-            if raw.price:
-                analysis = await analyzer.analyze(fltr.brand, fltr.model, raw.price)
+            if raw.price and market_median:
+                analysis = analyzer.compare(raw.price, market_median, settings.MARKET_SAMPLE_SIZE)
 
-            # fetch owner telegram_id via filter → user join
-            user_result = await session.execute(
-                select(User.telegram_id)
-                .join(Filter, Filter.user_id == User.id)
-                .where(Filter.id == fltr.id)
-            )
-            telegram_id = user_result.scalar_one_or_none()
             if telegram_id:
                 await notifier.send_listing(telegram_id, raw, fltr, analysis)
                 sent += 1

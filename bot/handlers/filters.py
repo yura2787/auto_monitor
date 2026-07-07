@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from bot.states import AddFilterFSM
-from bot.keyboards import confirm_filter_kb, condition_kb, skip_kb
+from bot.keyboards import confirm_filter_kb, condition_kb, skip_kb, cancel_kb
 from models.filter import Filter
 from models.user import User
 
@@ -35,7 +35,8 @@ async def start_wizard(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await state.set_state(AddFilterFSM.brand)
     await call.message.edit_text(
-        "🚗 Enter the car brand:\nExample: Toyota, BMW, Mercedes"
+        "🚗 Enter the car brand:\nExample: Toyota, BMW, Mercedes\n\nOr укр: тойота, бмв, мерседес",
+        reply_markup=cancel_kb(),
     )
     await call.answer()
 
