@@ -1,5 +1,19 @@
 # Auto Monitor Bot
 
+
+<img width="932" height="598" alt="2026-07-07_16-53" src="https://github.com/user-attachments/assets/d297c871-8088-4aba-8087-bafc34b17d65" />
+
+
+
+<img width="842" height="332" alt="2026-07-07_16-53_1" src="https://github.com/user-attachments/assets/482f1f62-53c5-4989-bfd0-4ae72c5dc946" />
+
+
+
+
+<img width="682" height="784" alt="2026-07-07_16-54_1" src="https://github.com/user-attachments/assets/40248071-6bba-4669-bcef-c94d0c185dda" />
+<img width="1256" height="1432" alt="2026-07-07_16-54_2" src="https://github.com/user-attachments/assets/701b7f8b-e3dc-4715-86ed-e05aabf0dfb5" />
+
+
 Telegram bot for monitoring car listings on OLX.ua. Sends instant notifications when new cars matching your filters appear.
 
 ## Features
