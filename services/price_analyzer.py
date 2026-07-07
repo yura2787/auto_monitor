@@ -50,16 +50,16 @@ class PriceAnalyzer:
 
         if diff <= -20:
             emoji = "💚"
-            verdict = f"Відмінна ціна — на {abs(round(diff))}% нижче ринку"
+            verdict = f"Excellent price — {abs(round(diff))}% below market"
         elif diff <= -10:
             emoji = "✅"
-            verdict = f"Хороша ціна — на {abs(round(diff))}% нижче ринку"
+            verdict = f"Good price — {abs(round(diff))}% below market"
         elif diff < 15:
             emoji = "😐"
-            verdict = "Ринкова ціна"
+            verdict = "Market price"
         else:
             emoji = "⚠️"
-            verdict = f"Дорожче ринку на {round(diff)}%"
+            verdict = f"Above market by {round(diff)}%"
 
         return PriceAnalysis(
             verdict=verdict,
